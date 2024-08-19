@@ -21,20 +21,17 @@ import com.example.vinorate.Models.Review;
 import com.example.vinorate.Models.Wine;
 import com.example.vinorate.Models.WineCollection;
 import com.example.vinorate.R;
+import com.example.vinorate.Utilities.FirebaseManager;
 import com.example.vinorate.Utilities.ImageLoader;
 import com.example.vinorate.databinding.FragmentForYouBinding;
 import com.google.android.material.textview.MaterialTextView;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseException;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
 public class ForYouFragment extends Fragment {
@@ -47,6 +44,7 @@ public class ForYouFragment extends Fragment {
     private WineCollection wineCollection;
     private Wine dailyRecommendation;
     private WineReviewAdapter reviewAdapter;
+    private FirebaseManager firebaseManager;
     private final ArrayList<Review> reviewList = new ArrayList<>();
 
     @Nullable
@@ -55,10 +53,10 @@ public class ForYouFragment extends Fragment {
         binding = FragmentForYouBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        // Set up the RecyclerView for reviews
         setupRecyclerView();
 
-        // Load or generate the daily recommendation
+        firebaseManager = new FirebaseManager();
+
         loadOrGenerateDailyRecommendation();
 
         return root;
@@ -76,61 +74,20 @@ public class ForYouFragment extends Fragment {
         long currentTime = Calendar.getInstance().getTimeInMillis();
 
         if (currentTime - lastUpdate >= 24 * 60 * 60 * 1000) {
-            loadWineCollection();
+            // Time to generate a new daily recommendation
+            firebaseManager.loadWineCollectionWithWishlist(wineCollection -> {
+                this.wineCollection = wineCollection;
+                dailyRecommendation = getRandomWine();
+                assert dailyRecommendation != null;
+                saveDailyRecommendation(dailyRecommendation);
+                displayDailyRecommendation();
+            });
         } else {
             String dailyWineId = preferences.getString(PREF_DAILY_WINE_ID, null);
             if (dailyWineId != null) {
                 loadDailyRecommendationFromId(dailyWineId);
             }
         }
-    }
-
-    private void loadWineCollection() {
-        FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference winesRef = database.getReference("WineCollection").child("allWines");
-        winesRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                wineCollection = new WineCollection();
-
-                for (DataSnapshot wineSnapshot : snapshot.getChildren()) {
-                    try {
-                        Wine wine = wineSnapshot.getValue(Wine.class);
-                        if (wine != null) {
-                            DataSnapshot reviewsSnapshot = wineSnapshot.child("reviews");
-                            if (reviewsSnapshot.exists()) {
-                                Map<String, Review> reviewsMap = (Map<String, Review>) reviewsSnapshot.getValue();
-                                if (reviewsMap != null) {
-                                    wine.setReviews(reviewsMap);
-                                }
-                            }
-                            wineCollection.addWine(wine);
-                        } else {
-                            Log.e("ForYouFragment", "Wine is null for key: " + wineSnapshot.getKey());
-                        }
-                    } catch (DatabaseException e) {
-                        Log.e("ForYouFragment", "Error parsing wine: " + e.getMessage());
-                    }
-                }
-
-                if (!wineCollection.getAllWines().isEmpty()) {
-                    dailyRecommendation = getRandomWine();
-                    saveDailyRecommendation(dailyRecommendation);
-                    displayDailyRecommendation();
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Log.e("ForYouFragment", "Database error: " + error.getMessage());
-            }
-        });
-    }
-
-    private Wine getRandomWine() {
-        List<Wine> wines = new ArrayList<>(wineCollection.getAllWines().values());
-        Random random = new Random();
-        return wines.get(random.nextInt(wines.size()));
     }
 
     private void saveDailyRecommendation(Wine wine) {
@@ -142,13 +99,24 @@ public class ForYouFragment extends Fragment {
     }
 
     private void loadDailyRecommendationFromId(String wineId) {
-        DatabaseReference wineRef = FirebaseDatabase.getInstance().getReference("WineCollection").child("allWines").child(wineId);
-        wineRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        firebaseManager.getWineById(wineId, new ValueEventListener() {
+            @SuppressLint("NotifyDataSetChanged")
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 dailyRecommendation = snapshot.getValue(Wine.class);
                 if (dailyRecommendation != null) {
-                    displayDailyRecommendation();
+                    firebaseManager.getUserWishlist(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot wishlistSnapshot) {
+                            dailyRecommendation.setWhitelisted(wishlistSnapshot.hasChild(dailyRecommendation.getId()));
+                            displayDailyRecommendation();
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+                            Log.e("ForYouFragment", "Error loading wishlist: " + error.getMessage());
+                        }
+                    });
                 }
             }
 
@@ -185,6 +153,7 @@ public class ForYouFragment extends Fragment {
             wineWishlistIcon.setOnClickListener(v -> {
                 dailyRecommendation.setWhitelisted(!dailyRecommendation.isWhitelisted());
                 updateWishlistIcon(wineWishlistIcon, dailyRecommendation);
+                firebaseManager.toggleWishlistItem(dailyRecommendation.getId());
             });
 
             reviewList.clear();
@@ -201,11 +170,19 @@ public class ForYouFragment extends Fragment {
         }
     }
 
+    private Wine getRandomWine() {
+        if (wineCollection != null && !wineCollection.getAllWines().isEmpty()) {
+            List<Wine> wines = new ArrayList<>(wineCollection.getAllWines().values());
+            Random random = new Random();
+            return wines.get(random.nextInt(wines.size()));
+        }
+        return null;
+    }
+
     @Override
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
     }
 }
-
 

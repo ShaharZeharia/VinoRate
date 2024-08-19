@@ -1,12 +1,12 @@
-package com.example.vinorate;
+package com.example.vinorate.Activitys;
 
 import android.os.Bundle;
 import android.util.Log;
 
 import com.example.vinorate.Models.User;
+import com.example.vinorate.R;
 import com.example.vinorate.Utilities.FirebaseManager;
 import com.example.vinorate.Utilities.ImageLoader;
-import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
@@ -48,7 +48,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupBottomNavigation() {
-        BottomNavigationView navView = findViewById(R.id.nav_view);
+        findViewById(R.id.nav_view);
         AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(
                 R.id.navigation_for_you,
                 R.id.navigation_search,
@@ -67,10 +67,6 @@ public class MainActivity extends AppCompatActivity {
                 // User is signed in
                 Log.d("MainActivity", "User signed in: " + firebaseUser.getUid());
                 handleUserSignIn(firebaseUser);
-            } else {
-                // User is signed out
-                Log.d("MainActivity", "User signed out");
-                // Handle the case where the user is not signed in, maybe redirect to login activity
             }
         };
     }

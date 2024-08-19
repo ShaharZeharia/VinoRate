@@ -7,7 +7,6 @@ import java.util.UUID;
 
 public class Review implements Serializable {
     public static final int MAX_LINES_COLLAPSED = 3;
-    public static final int MIN_LINES_COLLAPSED = 1;
 
     private final String id;
     private String username = "";

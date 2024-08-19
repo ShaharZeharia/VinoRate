@@ -11,10 +11,6 @@ public class ImageLoader {
     private static volatile ImageLoader instance;
     private static Context context;
 
-//    private ImageLoader(Context context) {
-//        this.context = context;
-//    }
-
     private ImageLoader(Context context) {
         this.context = context.getApplicationContext();
     }
@@ -34,14 +30,6 @@ public class ImageLoader {
         }
         return getInstance();
     }
-
-//    public void load(String source, ImageView imageView) {
-//        Glide.with(context)
-//                .load(source)
-//                .placeholder(R.drawable.ic_unavailable_photo)
-//                .centerInside()
-//                .into(imageView);
-//    }
 
     public void load(String source, ImageView imageView) {
         if (context != null) {

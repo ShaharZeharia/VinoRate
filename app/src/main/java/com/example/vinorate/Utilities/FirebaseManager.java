@@ -1,5 +1,7 @@
 package com.example.vinorate.Utilities;
 
+import android.util.Log;
+
 import androidx.annotation.NonNull;
 
 import com.example.vinorate.Models.Review;
@@ -13,6 +15,11 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class FirebaseManager {
 
@@ -35,20 +42,6 @@ public class FirebaseManager {
 
     public void saveUserToFirebase(User user) {
         usersRef.child(user.getId()).setValue(user);
-    }
-
-    public void handleUserLogin() {
-        FirebaseUser currentUser = getCurrentUser();
-        if (currentUser != null) {
-            String uid = currentUser.getUid();
-            String name = currentUser.getDisplayName();
-            createUserIfNotExists(uid, name);
-        }
-    }
-
-    private void createUserIfNotExists(String uid, String name) {
-        User newUser = new User(uid, name);
-        usersRef.child(uid).setValue(newUser);
     }
 
     public void toggleWishlistItem(String wineId) {
@@ -152,21 +145,154 @@ public class FirebaseManager {
         void onRatingUpdate(float newRating);
     }
 
-    public void saveWineCollectionToFirebase(WineCollection wineCollection) {
-        winesRef.setValue(wineCollection.getAllWines());
+    public interface OnWineCollectionLoadedListener {
+        void onWineCollectionLoaded(WineCollection wineCollection);
     }
 
-    public void addWineToFirebase(Wine wine) {
-        winesRef.child(wine.getId()).setValue(wine);
+    public void loadWineCollectionWithWishlist(OnWineCollectionLoadedListener listener) {
+        DatabaseReference winesRef = getWinesRef();
+        loadWines(winesRef, wineCollection -> {
+            FirebaseUser currentUser = getCurrentUser();
+            if (currentUser != null) {
+                addWishlistToWineCollection(wineCollection, listener);
+            } else {
+                listener.onWineCollectionLoaded(wineCollection);
+            }
+        });
     }
 
-    public void loadWineCollectionFromFirebase(ValueEventListener listener) {
-        winesRef.addValueEventListener(listener);
+    private void loadWines(DatabaseReference winesRef, OnWineCollectionLoadedListener listener) {
+        winesRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                WineCollection wineCollection = parseWineCollection(snapshot);
+                listener.onWineCollectionLoaded(wineCollection);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("Firebase", "Error loading wines: " + error.getMessage());
+                listener.onWineCollectionLoaded(new WineCollection());
+            }
+        });
     }
 
-    public void updateWineInFirebase(Wine wine) {
-        winesRef.child(wine.getId()).setValue(wine);
+    private WineCollection parseWineCollection(DataSnapshot snapshot) {
+        WineCollection wineCollection = new WineCollection();
+        for (DataSnapshot wineSnapshot : snapshot.getChildren()) {
+            Wine wine = parseWine(wineSnapshot);
+            if (wine != null) {
+                wineCollection.addWine(wine);
+            }
+        }
+        return wineCollection;
     }
+
+    private Wine parseWine(DataSnapshot wineSnapshot) {
+        Wine wine = wineSnapshot.getValue(Wine.class);
+        if (wine != null) {
+            DataSnapshot reviewsSnapshot = wineSnapshot.child("reviews");
+            if (reviewsSnapshot.exists()) {
+                wine.setReviews(parseReviews(reviewsSnapshot));
+            }
+        }
+        return wine;
+    }
+
+    private Map<String, Review> parseReviews(DataSnapshot reviewsSnapshot) {
+        Map<String, Review> reviewsMap = new HashMap<>();
+        for (DataSnapshot reviewSnapshot : reviewsSnapshot.getChildren()) {
+            Review review = reviewSnapshot.getValue(Review.class);
+            if (review != null) {
+                reviewsMap.put(reviewSnapshot.getKey(), review);
+            }
+        }
+        return reviewsMap;
+    }
+
+    private void addWishlistToWineCollection(WineCollection wineCollection, OnWineCollectionLoadedListener listener) {
+        getUserWishlist(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                updateWineCollectionWithWishlist(wineCollection, snapshot);
+                listener.onWineCollectionLoaded(wineCollection);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("Firebase", "Error loading wishlist: " + error.getMessage());
+                listener.onWineCollectionLoaded(wineCollection);
+            }
+        });
+    }
+
+    private void updateWineCollectionWithWishlist(WineCollection wineCollection, DataSnapshot snapshot) {
+        for (DataSnapshot wineSnapshot : snapshot.getChildren()) {
+            String wineId = wineSnapshot.getKey();
+            if (wineId != null && wineCollection.getWineById(wineId) != null) {
+                wineCollection.getWineById(wineId).setWhitelisted(true);
+            }
+        }
+    }
+
+    public void loadWishlist(OnWishlistLoadedListener listener) {
+        FirebaseUser currentUser = getCurrentUser();
+        if (currentUser == null) return;
+
+        DatabaseReference wishlistRef = usersRef.child(currentUser.getUid()).child("wishlist");
+        loadWishlistItems(wishlistRef, listener);
+    }
+
+    private void loadWishlistItems(DatabaseReference wishlistRef, OnWishlistLoadedListener listener) {
+        wishlistRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                List<Wine> wishlistWines = new ArrayList<>();
+                processWishlistItems(snapshot, wishlistWines, listener);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("Firebase", "Error loading wishlist: " + error.getMessage());
+            }
+        });
+    }
+
+    private void processWishlistItems(DataSnapshot snapshot, List<Wine> wishlistWines, OnWishlistLoadedListener listener) {
+        for (DataSnapshot wineSnapshot : snapshot.getChildren()) {
+            String wineId = wineSnapshot.getKey();
+            if (wineId != null) {
+                loadWineForWishlist(wineId, wishlistWines, listener);
+            }
+        }
+    }
+
+    private void loadWineForWishlist(String wineId, List<Wine> wishlistWines, OnWishlistLoadedListener listener) {
+        getWineById(wineId, new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot wineDataSnapshot) {
+                Wine wine = wineDataSnapshot.getValue(Wine.class);
+                if (wine != null) {
+                    wine.setWhitelisted(true);
+                    wishlistWines.add(wine);
+                }
+                if (listener != null) {
+                    listener.onWishlistLoaded(wishlistWines);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("Firebase", "Error loading wine: " + error.getMessage());
+            }
+        });
+    }
+
+
+    public interface OnWishlistLoadedListener {
+        void onWishlistLoaded(List<Wine> wishlist);
+    }
+
 
 }
 

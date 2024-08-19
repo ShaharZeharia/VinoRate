@@ -11,7 +11,7 @@ import java.util.Objects;
 public class User implements Serializable {
 
     private String id;
-    private String name = "Unnamed user";  // User's name (optional, especially if logged in with Gmail)
+    private String name = "Unnamed user";
     private final ArrayList<Wine> wishlist;
     private final ArrayList<Review> reviews;
 

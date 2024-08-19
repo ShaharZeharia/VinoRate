@@ -118,8 +118,6 @@ public class WineDetailsFragment extends Fragment {
                 }
             }
         });
-
-
         return view;
     }
 
