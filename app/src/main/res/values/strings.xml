@@ -1,6 +1,16 @@
 <resources>
     <string name="app_name">VinoRate</string>
-    <string name="title_home">Home</string>
-    <string name="title_dashboard">Dashboard</string>
-    <string name="title_notifications">Notifications</string>
+    <string name="title_for_you">For you</string>
+    <string name="title_search">Search</string>
+    <string name="title_Wishlist">Wishlist</string>
+    <string name="title_profile">Profile</string>
+    <string name="wishlist">Wishlist</string>
+    <string name="title_wine_details">Wine Details</string>
+    <string name="add_your_review">Add your review</string>
+    <string name="add_review">add_review</string>
+    <string name="picked_for_you">Picked for you</string>
+    <string name="sign_out">Sign Out</string>
+    <string name="overview">Overview</string>
+    <string name="e_mail">E-Mail</string>
+    <string name="phone">Phone</string>
 </resources>
