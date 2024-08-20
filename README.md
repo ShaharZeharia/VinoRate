@@ -81,8 +81,13 @@ To enable Firebase functionality in your VinoRate project, follow these steps:
 
 For any questions or support, please contact:
  **Shachar Zeharia** - shacharz2000@gmail.com
+![for you](https://github.com/user-attachments/assets/ee61439d-4110-42eb-be01-24d7944eae15)
 
 
 
 https://github.com/user-attachments/assets/7baca0e4-458d-44f6-bc03-99c3b1ba200c
 
+![search](https://github.com/user-attachments/assets/bfe1f25e-3723-4a2f-8988-098603b8bec1)
+![wine details](https://github.com/user-attachments/assets/071c6847-a0d5-42da-a0e3-71faa4ea7f18)
+![wishlist](https://github.com/user-attachments/assets/e04206f4-956b-498f-ae04-ccd1ac12fafe)
+![profile](https://github.com/user-attachments/assets/025215ab-c6b7-4a52-a0b1-e974e4abb477)
