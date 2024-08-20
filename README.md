@@ -81,13 +81,41 @@ To enable Firebase functionality in your VinoRate project, follow these steps:
 
 For any questions or support, please contact:
  **Shachar Zeharia** - shacharz2000@gmail.com
-![for you](https://github.com/user-attachments/assets/ee61439d-4110-42eb-be01-24d7944eae15)
-
-
+ 
 
 https://github.com/user-attachments/assets/7baca0e4-458d-44f6-bc03-99c3b1ba200c
 
-![search](https://github.com/user-attachments/assets/bfe1f25e-3723-4a2f-8988-098603b8bec1)
-![wine details](https://github.com/user-attachments/assets/071c6847-a0d5-42da-a0e3-71faa4ea7f18)
-![wishlist](https://github.com/user-attachments/assets/e04206f4-956b-498f-ae04-ccd1ac12fafe)
-![profile](https://github.com/user-attachments/assets/025215ab-c6b7-4a52-a0b1-e974e4abb477)
+### 1. Profile Screen
+- **User Profile:** Display the user's personal information, including their picture, name, and email. Users can view and manage their reviews from this screen.
+
+<div class="row">
+  <img src="https://github.com/user-attachments/assets/96dec0af-a881-4165-86ec-c4d1b94dad35" alt="Profile Screen" style="height:700px;"/>
+</div>
+
+### 2. Wishlist Screen
+- **Wishlist:** Users can add wines to their wishlist, allowing them to track wines they want to try in the future.
+
+<div class="row">
+  <img src="https://github.com/user-attachments/assets/cb38443b-efb1-4e2a-91a9-7ff9b30f445b" alt="Wishlist Screen" style="height:700px;"/>
+</div>
+
+### 3. Wine Details Screen
+- **Wine Details:** Display detailed information about each wine, including user reviews, ratings, and an option to add the wine to the wishlist.
+
+<div class="row">
+  <img src="https://github.com/user-attachments/assets/da8e1d89-02cb-44fe-8c6b-541cbc8b85eb" alt="Wine Details Screen" style="height:700px;"/>
+</div>
+
+### 4. Search Screen
+- **Search:** Users can search for wines by name, and view detailed information about each search result.
+
+<div class="row">
+  <img src="https://github.com/user-attachments/assets/216c0d4f-b607-4b46-be13-504fd0bb3874" alt="Search Screen" style="height:700px;"/>
+</div>
+
+### 5. For You Screen
+- **Daily Recommendations:** The "For You" screen provides users with a daily wine recommendation tailored to their taste.
+
+<div class="row">
+  <img src="https://github.com/user-attachments/assets/db79eec7-23be-4d7b-adfc-83f0d665ab64" alt="For You Screen" style="height:700px;"/>
+</div>
